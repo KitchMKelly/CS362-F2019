@@ -875,7 +875,7 @@ int cardEffect(int card, int choice1, int choice2, int choice3, struct gameState
         return 0;
 
     case minion:
-		minionAction(handPos, currentPlayer, choice1, choice2, state);
+		minionAction(currentPlayer, choice1, choice2, state);
 		return 0;
 
     case steward:
@@ -1036,7 +1036,7 @@ int baronAction(int choice, struct gameState *state, int player)
 	state->numBuys++;
 	if (choice > 0)	{																	
 		printf("You have chosen to discard an estate card\n");
-		for (int p = 0; p > state->handCount[player]; p++) {
+		for (int p = 0; p < state->handCount[player]; p++) {
 
 			//if an estate card is found -> discard, gain 4 coins, and exit
 			if (state->hand[player][p] == estate) {	
@@ -1077,7 +1077,7 @@ int minionAction(int player, int choice1, int choice2, struct gameState *state)
 	else if (choice2)
 	{
 		//discard hand -> discard highest card in player's hand array by using handCount[]
-		while (numHandCards(state) > 0)
+		while (state->handCount[player] >= 0)
 		{
 			discardCard((state->handCount[player]), player, state, 0);
 		}
@@ -1189,14 +1189,16 @@ int tributeAction(int player, int nextPlayer, struct gameState *state)
 	else {
 		//Shuffle discard back into deck if not enough cards to draw
 		if (state->deckCount[nextPlayer] < 2) {
-			for (int i = state->discardCount[nextPlayer] -1; i <= 0; i--) {
-				state->deck[nextPlayer][state->deckCount[nextPlayer]] = state->discard[nextPlayer][i];
-				state->deckCount[nextPlayer]++;
-				state->discard[nextPlayer][i] = -1;
-				state->discardCount[nextPlayer]--;
-			}
+			if (state->discardCount[nextPlayer] > 0) {
+				for (int i = state->discardCount[nextPlayer] - 1; i >= 0; i--) {
+					state->deck[nextPlayer][state->deckCount[nextPlayer]] = state->discard[nextPlayer][i];
+					state->deckCount[nextPlayer]++;
+					state->discard[nextPlayer][i] = -1;
+					state->discardCount[nextPlayer]--;
+				}
 
-			shuffle(nextPlayer, state);
+				shuffle(nextPlayer, state);
+			}
 		}
 
 		//Add top two cards from deck to the tribure card array
@@ -1215,7 +1217,7 @@ int tributeAction(int player, int nextPlayer, struct gameState *state)
 	}
 
 	//Determine bonuses from tributed cards
-	for (int i = 0; i <= 2; i++) {
+	for (int i = 0; i < 2; i++) {
 		//Treasure cards
 		if (tributeRevealedCards[i] == copper || tributeRevealedCards[i] == silver || tributeRevealedCards[i] == gold) {
 			state->coins += 2;
@@ -1394,4 +1396,3 @@ int updateCoins(int player, struct gameState *state, int bonus)
 
 
 //end of dominion.c
-
